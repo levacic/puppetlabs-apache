@@ -31,6 +31,7 @@ class apache (
   $purge_vdir           = false,
   $serveradmin          = 'root@localhost',
   $sendfile             = 'On',
+  $mmap                 = 'On',
   $error_documents      = false,
   $timeout              = '120',
   $httpd_dir            = $apache::params::httpd_dir,
@@ -86,6 +87,7 @@ class apache (
     }
   }
   validate_re($sendfile, [ '^[oO]n$' , '^[oO]ff$' ])
+  validate_re($mmap, [ '^[oO]n$' , '^[oO]ff$' ])
 
   # declare the web server user and group
   # Note: requiring the package means the package ought to create them and not puppet
@@ -252,6 +254,7 @@ class apache (
     # - $logroot
     # - $error_log
     # - $sendfile
+    # - $mmap
     # - $mod_dir
     # - $ports_file
     # - $confd_dir
