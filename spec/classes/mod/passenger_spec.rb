@@ -13,11 +13,14 @@ describe 'apache::mod::passenger', :type => :class do
     it { should contain_class("apache::params") }
     it { should contain_apache__mod('passenger') }
     it { should contain_package("libapache2-mod-passenger") }
+    it { should contain_file('passenger.load').with({
+      'path' => '/etc/apache2/mods-available/passenger.load',
+    }) }
     it { should contain_file('passenger.conf').with({
       'path' => '/etc/apache2/mods-available/passenger.conf',
     }) }
-    it { should contain_file('passenger.conf').with_content(/^  PassengerRoot \/usr$/) }
-    it { should contain_file('passenger.conf').with_content(/^  PassengerRuby \/usr\/bin\/ruby$/) }
+    it { should contain_file('passenger.conf').with_content(/^  PassengerRoot "\/usr"$/) }
+    it { should contain_file('passenger.conf').with_content(/^  PassengerRuby "\/usr\/bin\/ruby"$/) }
     describe "with passenger_high_performance => true" do
       let :params do
         { :passenger_high_performance => 'true' }
@@ -64,19 +67,43 @@ describe 'apache::mod::passenger', :type => :class do
       let :params do
         { :passenger_root => '/usr/lib/example' }
       end
-      it { should contain_file('passenger.conf').with_content(/^  PassengerRoot \/usr\/lib\/example$/) }
+      it { should contain_file('passenger.conf').with_content(/^  PassengerRoot "\/usr\/lib\/example"$/) }
     end
     describe "with passenger_ruby => /user/lib/example/ruby" do
       let :params do
         { :passenger_ruby => '/user/lib/example/ruby' }
       end
-      it { should contain_file('passenger.conf').with_content(/^  PassengerRuby \/user\/lib\/example\/ruby$/) }
+      it { should contain_file('passenger.conf').with_content(/^  PassengerRuby "\/user\/lib\/example\/ruby"$/) }
     end
     describe "with passenger_use_global_queue => true" do
       let :params do
         { :passenger_use_global_queue => 'true' }
       end
       it { should contain_file('passenger.conf').with_content(/^  PassengerUseGlobalQueue true$/) }
+    end
+    describe "with mod_path => '/usr/lib/foo/mod_foo.so'" do
+      let :params do
+        { :mod_path => '/usr/lib/foo/mod_foo.so' }
+      end
+      it { should contain_file('passenger.load').with_content(/^LoadModule passenger_module \/usr\/lib\/foo\/mod_foo\.so$/) }
+    end
+    describe "with mod_lib_path => '/usr/lib/foo'" do
+      let :params do
+        { :mod_lib_path => '/usr/lib/foo' }
+      end
+      it { should contain_file('passenger.load').with_content(/^LoadModule passenger_module \/usr\/lib\/foo\/mod_passenger\.so$/) }
+    end
+    describe "with mod_lib => 'mod_foo.so'" do
+      let :params do
+        { :mod_lib => 'mod_foo.so' }
+      end
+      it { should contain_file('passenger.load').with_content(/^LoadModule passenger_module \/usr\/lib\/apache2\/modules\/mod_foo\.so$/) }
+    end
+    describe "with mod_id => 'mod_foo'" do
+      let :params do
+        { :mod_id => 'mod_foo' }
+      end
+      it { should contain_file('passenger.load').with_content(/^LoadModule mod_foo \/usr\/lib\/apache2\/modules\/mod_passenger\.so$/) }
     end
 
   end
@@ -91,11 +118,23 @@ describe 'apache::mod::passenger', :type => :class do
     it { should contain_class("apache::params") }
     it { should contain_apache__mod('passenger') }
     it { should contain_package("mod_passenger") }
-    it { should contain_file('passenger.conf').with({
-      'path' => '/etc/httpd/conf.d/passenger.conf',
+    it { should contain_file('passenger.load').with({
+      'path' => '/etc/httpd/conf.d/passenger.load',
     }) }
-    it { should contain_file('passenger.conf').with_content(/^  PassengerRoot \/usr\/share\/rubygems\/gems\/passenger-3.0.17$/) }
-    it { should contain_file('passenger.conf').with_content(/^  PassengerRuby \/usr\/bin\/ruby$/) }
+    it { should contain_file('passenger.conf').with_content(/^  PassengerRoot "\/usr\/lib\/ruby\/gems\/1.8\/gems\/passenger-3\.0\.19"$/) }
+    it { should contain_file('passenger.conf').with_content(/^  PassengerRuby "\/usr\/bin\/ruby"/) }
+    describe "with passenger_root => '/usr/lib/example'" do
+      let :params do
+        { :passenger_root => '/usr/lib/example' }
+      end
+      it { should contain_file('passenger.conf').with_content(/^  PassengerRoot "\/usr\/lib\/example"$/) }
+    end
+    describe "with passenger_ruby => /user/lib/example/ruby" do
+      let :params do
+        { :passenger_ruby => '/user/lib/example/ruby' }
+      end
+      it { should contain_file('passenger.conf').with_content(/^  PassengerRuby "\/user\/lib\/example\/ruby"$/) }
+    end
   end
   context "on a FreeBSD OS" do
     let :facts do

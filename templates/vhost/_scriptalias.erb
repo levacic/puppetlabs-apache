@@ -10,14 +10,14 @@
   ## Script alias directives
 <%# Combine scriptalais and scriptaliases into a single data structure -%>
 <%# for backward compatibility and ease of implementation -%>
-<%- aliases << { 'alias' => '/cgi-bin/', 'path' => @scriptalias } if @scriptalias -%>
+<%- aliases << { 'alias' => '/cgi-bin', 'path' => @scriptalias } if @scriptalias -%>
 <%- aliases.flatten.compact! -%>
 <%- aliases.each do |salias| -%>
   <%- if salias["path"] != '' -%>
     <%- if salias["alias"] and salias["alias"] != '' -%>
-  ScriptAlias <%= salias['alias'] %> <%= salias['path'] %>
+  ScriptAlias <%= salias['alias'] %> "<%= salias['path'] %>"
     <%- elsif salias["aliasmatch"] and salias["aliasmatch"] != '' -%>
-  ScriptAliasMatch <%= salias['aliasmatch'] %> <%= salias['path'] %>
+  ScriptAliasMatch <%= salias['aliasmatch'] %> "<%= salias['path'] %>"
     <%- end -%>
   <%- end -%>
 <%- end -%>

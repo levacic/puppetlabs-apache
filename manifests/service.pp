@@ -12,12 +12,12 @@
 # Sample Usage:
 #
 #    sometype { 'foo':
-#      notify => Class['apache::service],
+#      notify => Class['apache::service'],
 #    }
 #
 #
 class apache::service (
-  $service_name   = $apache::params::service_name,
+  $service_name   = $::apache::params::service_name,
   $service_enable = true,
   $service_ensure = 'running',
 ) {
