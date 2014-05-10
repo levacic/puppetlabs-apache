@@ -9,6 +9,11 @@ class apache::default_mods (
   case $::osfamily {
     'redhat', 'freebsd': {
       ::apache::mod { 'log_config': }
+      if $apache_version >= 2.4 {
+        # Lets fork it
+        ::apache::mod { 'systemd': }
+        ::apache::mod { 'unixd': }
+      }
     }
     default: {}
   }
@@ -26,7 +31,9 @@ class apache::default_mods (
         include ::apache::mod::mime
         include ::apache::mod::mime_magic
         include ::apache::mod::vhost_alias
+        include ::apache::mod::suexec
         include ::apache::mod::rewrite
+        include ::apache::mod::speling
         ::apache::mod { 'auth_digest': }
         ::apache::mod { 'authn_anon': }
         ::apache::mod { 'authn_dbm': }
@@ -36,17 +43,11 @@ class apache::default_mods (
         ::apache::mod { 'ext_filter': }
         ::apache::mod { 'include': }
         ::apache::mod { 'logio': }
-        ::apache::mod { 'speling': }
         ::apache::mod { 'substitute': }
-        ::apache::mod { 'suexec': }
         ::apache::mod { 'usertrack': }
         ::apache::mod { 'version': }
 
         if $apache_version >= 2.4 {
-          # Lets fork it
-          ::apache::mod { 'systemd': }
-
-          ::apache::mod { 'unixd': }
           ::apache::mod { 'authn_core': }
         }
         else {
@@ -65,6 +66,7 @@ class apache::default_mods (
         include ::apache::mod::rewrite
         include ::apache::mod::userdir
         include ::apache::mod::vhost_alias
+        include ::apache::mod::speling
 
         ::apache::mod { 'asis': }
         ::apache::mod { 'auth_digest': }
@@ -83,7 +85,6 @@ class apache::default_mods (
         ::apache::mod { 'imagemap':}
         ::apache::mod { 'include': }
         ::apache::mod { 'logio': }
-        ::apache::mod { 'speling': }
         ::apache::mod { 'unique_id': }
         ::apache::mod { 'usertrack': }
         ::apache::mod { 'version': }
@@ -121,6 +122,9 @@ class apache::default_mods (
 
       # filter is needed by mod_deflate
       ::apache::mod { 'filter': }
+
+      # lots of stuff seems to break without access_compat
+      ::apache::mod { 'access_compat': }
     } else {
       ::apache::mod { 'authz_default': }
     }

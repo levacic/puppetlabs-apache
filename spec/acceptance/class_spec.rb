@@ -38,10 +38,25 @@ describe 'apache class', :unless => UNSUPPORTED_PLATFORMS.include?(fact('osfamil
     # Using puppet_apply as a helper
     it 'should work with no errors' do
       pp = <<-EOS
-      file { '/tmp/apache_custom': ensure => directory, }
+      if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '7' {
+        package { 'policycoreutils-python': ensure => installed }
+        exec { 'set_apache_defaults':
+          command => 'semanage fcontext -a -t httpd_sys_content_t "/apache_spec(/.*)?"',
+          path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+          require => Package['policycoreutils-python'],
+        }
+        exec { 'restorecon_apache':
+          command => 'restorecon -Rv /apache_spec',
+          path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+          before  => Service['httpd'],
+          require => Class['apache'],
+        }
+      }
+      file { '/apache_spec': ensure => directory, }
+      file { '/apache_spec/apache_custom': ensure => directory, }
       class { 'apache':
-        mod_dir   => '/tmp/apache_custom/mods',
-        vhost_dir => '/tmp/apache_custom/vhosts',
+        mod_dir   => '/apache_spec/apache_custom/mods',
+        vhost_dir => '/apache_spec/apache_custom/vhosts',
       }
       EOS
 

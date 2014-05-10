@@ -1098,16 +1098,18 @@ describe 'apache::vhost', :type => :define do
           expect { subject }.to raise_error(Puppet::Error, /'error_log_file' and 'error_log_pipe' cannot be defined at the same time/)
         end
       end
-      describe 'when docroot owner is specified' do
+      describe 'when docroot owner and mode is specified' do
         let :params do default_params.merge({
           :docroot_owner => 'testuser',
           :docroot_group => 'testgroup',
+          :docroot_mode  => '0750',
         }) end
-        it 'should set vhost ownership' do
+        it 'should set vhost ownership and permissions' do
           should contain_file(params[:docroot]).with({
             :ensure => :directory,
             :owner  => 'testuser',
             :group  => 'testgroup',
+            :mode   => '0750',
           })
         end
       end
@@ -1306,6 +1308,16 @@ describe 'apache::vhost', :type => :define do
             should contain_file("25-#{title}.conf").with_content %r{<VirtualHost 10\.0\.0\.1>}
           end
         end
+      end
+
+      describe 'when suexec_user_group is specified' do
+        let :params do
+          default_params.merge({
+            :suexec_user_group => 'nobody nogroup',
+          })
+        end
+
+        it { should contain_file("25-#{title}.conf").with_content %r{^  SuexecUserGroup nobody nogroup$} }
       end
 
       describe 'redirect rules' do

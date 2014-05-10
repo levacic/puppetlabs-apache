@@ -459,6 +459,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
           docroot       => '/tmp/test',
           docroot_owner => 'test_owner',
           docroot_group => 'test_group',
+          docroot_mode  => '0750',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -468,6 +469,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       it { should be_directory }
       it { should be_owned_by 'test_owner' }
       it { should be_grouped_into 'test_group' }
+      it { should be_mode 750 }
     end
   end
 
@@ -482,6 +484,17 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
+    end
+
+    describe file($ports_file) do
+      it { should be_file }
+      if fact('osfamily') == 'RedHat' and fact('operatingsystemmajrelease') == '7'
+        it { should_not contain 'NameVirtualHost test.server' }
+      elsif fact('operatingsystem') == 'Ubuntu' and fact('operatingsystemrelease') =~ /(14\.04|13\.10)/
+        it { should_not contain 'NameVirtualHost test.server' }
+      else
+        it { should contain 'NameVirtualHost test.server' }
+      end
     end
 
     describe file("#{$vhost_dir}/10-test.server.conf") do
@@ -1000,7 +1013,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
   end
 
   # So what does this work on?
-  if default['platform'] !~ /^(debian-(6|7)|el-(5|6))/
+  if default['platform'] !~ /^(debian-(6|7)|el-(5|6|7))/
     describe 'fastcgi' do
       it 'applies cleanly' do
         pp = <<-EOS
@@ -1028,12 +1041,27 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
   describe 'additional_includes' do
     it 'applies cleanly' do
       pp = <<-EOS
+        if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '7' {
+          exec { 'set_apache_defaults':
+            command => 'semanage fcontext -a -t httpd_sys_content_t "/apache_spec(/.*)?"',
+            path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+            require => Package['policycoreutils-python'],
+          }
+          package { 'policycoreutils-python': ensure => installed }
+          exec { 'restorecon_apache':
+            command => 'restorecon -Rv /apache_spec',
+            path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+            before  => Service['httpd'],
+            require => Class['apache'],
+          }
+        }
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        file { '/tmp/include': ensure => present, content => '#additional_includes' }
+        file { '/apache_spec': ensure => directory, }
+        file { '/apache_spec/include': ensure => present, content => '#additional_includes' }
         apache::vhost { 'test.server':
-          docroot             => '/tmp',
-          additional_includes => '/tmp/include',
+          docroot             => '/apache_spec',
+          additional_includes => '/apache_spec/include',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -1041,7 +1069,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
 
     describe file("#{$vhost_dir}/25-test.server.conf") do
       it { should be_file }
-      it { should contain 'Include "/tmp/include"' }
+      it { should contain 'Include "/apache_spec/include"' }
     end
   end
 
