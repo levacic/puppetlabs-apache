@@ -311,13 +311,13 @@ define apache::vhost(
 
   # Set access log format
   if $access_log_format {
-    $_access_log_format = "\"${access_log_format}\""
+    $my_access_log_format = "\"${access_log_format}\""
   } else {
-    $_access_log_format = 'combined'
+    $my_access_log_format = 'combined'
   }
 
   if $access_log_env_var {
-    $_access_log_env_var = "env=${access_log_env_var}"
+    $my_access_log_env_var = "env=${access_log_env_var}"
   }
 
   if $ip {
@@ -417,9 +417,9 @@ define apache::vhost(
     if !is_hash($directories) and !(is_array($directories) and is_hash($directories[0])) {
       fail("Apache::Vhost[${name}]: 'directories' must be either a Hash or an Array of Hashes")
     }
-    $_directories = $directories
+    $my_directories = $directories
   } else {
-    $_directory = {
+    $my_directory = {
       provider       => 'directory',
       path           => $docroot,
       options        => $options,
@@ -428,17 +428,17 @@ define apache::vhost(
     }
 
     if $apache_version == 2.4 {
-      $_directory_version = {
+      $my_directory_version = {
         require => 'all granted',
       }
     } else {
-      $_directory_version = {
+      $my_directory_version = {
         order => 'allow,deny',
         allow => 'from all',
       }
     }
 
-    $_directories = [ merge($_directory, $_directory_version) ]
+    $my_directories = [ merge($my_directory, $my_directory_version) ]
   }
 
   # Template uses:
@@ -452,12 +452,12 @@ define apache::vhost(
   # - $logroot
   # - $name
   # - $aliases
-  # - $_directories
+  # - $my_directories
   # - $log_level
   # - $access_log
   # - $access_log_destination
-  # - $_access_log_format
-  # - $_access_log_env_var
+  # - $my_access_log_format
+  # - $my_access_log_env_var
   # - $error_log
   # - $error_log_destination
   # - $error_documents

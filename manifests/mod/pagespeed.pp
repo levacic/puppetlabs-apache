@@ -34,13 +34,13 @@ class apache::mod::pagespeed (
   $additional_configuration      = {},
 ){
 
-  $_lib = $::apache::apache_version ? {
+  $my_lib = $::apache::apache_version ? {
     2.4     => 'mod_pagespeed_ap24.so',
     default => undef
   }
 
   apache::mod { 'pagespeed':
-    lib => $_lib,
+    lib => $my_lib,
   }
 
   file { 'pagespeed.conf':

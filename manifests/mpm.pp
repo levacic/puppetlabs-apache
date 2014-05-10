@@ -9,15 +9,15 @@ define apache::mpm (
   $mpm     = $name
   $mod_dir = $::apache::mod_dir
 
-  $_lib  = "mod_mpm_${mpm}.so"
-  $_path = "${lib_path}/${_lib}"
-  $_id   = "mpm_${mpm}_module"
+  $my_lib  = "mod_mpm_${mpm}.so"
+  $my_path = "${lib_path}/${my_lib}"
+  $my_id   = "mpm_${mpm}_module"
 
   if $apache_version >= 2.4 {
     file { "${mod_dir}/${mpm}.load":
       ensure  => file,
       path    => "${mod_dir}/${mpm}.load",
-      content => "LoadModule ${_id} ${_path}\n",
+      content => "LoadModule ${my_id} ${my_path}\n",
       require => [
         Package['httpd'],
         Exec["mkdir ${mod_dir}"],
